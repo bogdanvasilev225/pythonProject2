@@ -2,22 +2,19 @@ from utils import randbool
 from utils import randcell
 from utils import randcell2
 
-
+# Определение типов клеток и связанных констант
 #  0 - поле
-#  1-  дерево
+#  1 - дерево
 #  2 - река
 #  3 - госпиталь
 #  4 - апгрейд шоп
 #  5 - огонь
-
 CELL_TYPES = "🟩🌲🟦🚑🏩🔥"
 TREE_BONUS = 100
 UPGRADE_COST = 5000
 LIFE_COST = 10000
 
-
 class Map:
-
     def __init__(self, w, h):
         self.w = w
         self.h = h
@@ -29,11 +26,13 @@ class Map:
         self.generate_hospital()
 
     def check_bounds(self, x, y):
+        # Проверка, находится ли точка в пределах карты
         if (x < 0 or y < 0 or x >= self.h or y >= self.w):
             return False
         return True
 
     def print_map(self, helico, clouds):
+        # Вывод карты на экран с учетом вертолета и облаков
         print("⬛" * (self.w + 2))
         for ri in range(self.h):
             print("⬛", end="")
@@ -71,24 +70,28 @@ class Map:
                 break  # Выход из цикла, если выходит за пределы карты
 
     def generate_forest(self, r, mxr):
+        # Генерация леса с использованием случайных чисел
         for ri in range(self.h):
             for ci in range(self.w):
                 if randbool(r, mxr):
                     self.cells[ri][ci] = 1
 
     def generate_tree(self):
+        # Генерация дерева в случайной клетке
         c = randcell(self.w, self.h)
         cx, cy = c[0], c[1]
         if self.check_bounds(cx, cy) and self.cells[cx][cy] == 0:
             self.cells[cx][cy] = 1
 
     def generate_upgrade_shop(self):
+        # Генерация магазина улучшений в случайной клетке
         c = randcell(self.w, self.h)
         cx, cy = c[0], c[1]
         if self.check_bounds(cx, cy):
             self.cells[cx][cy] = 4
 
     def generate_hospital(self):
+        # Генерация госпиталя в случайной клетке (не на магазине улучшений)
         c = randcell(self.w, self.h)
         cx, cy = c[0], c[1]
         if self.check_bounds(cx, cy) and self.cells[cx][cy] != 4:
@@ -97,12 +100,14 @@ class Map:
             self.generate_hospital()
 
     def add_fire(self):
+        # Добавление огня в случайной клетке (только в клетку с деревом)
         c = randcell(self.w, self.h)
         cx, cy = c[0], c[1]
         if self.check_bounds(cx, cy) and self.cells[cx][cy] == 1:
             self.cells[cx][cy] = 5
 
     def update_fires(self):
+        # Обновление состояний клеток с огнем и добавление новых огней
         for ri in range(self.h):
             for ci in range(self.w):
                 cell = self.cells[ri][ci]
@@ -112,6 +117,7 @@ class Map:
             self.add_fire()
 
     def process_helicopter(self, helico, clouds):
+        # Обработка состояния вертолета в зависимости от типа клетки
         if helico.x < 0 or helico.y < 0 or helico.x >= self.h or helico.y >= self.w:
             return  # Вертолет за пределами карты, не обрабатываем
 
