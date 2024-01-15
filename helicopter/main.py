@@ -19,7 +19,6 @@ clouds = Clouds(MAP_W, MAP_H)
 helico = Helico(MAP_W, MAP_H)
 tick = 1  # Счетчик тиков
 
-
 # Словарь для определения движения вертолета по клавишам
 MOVES = {'w': (-1, 0), 'd': (0, 1), 's': (1, 0), 'a': (0, -1)}
 # Клавиши для сохранения и загрузки игры
@@ -27,32 +26,27 @@ MOVES = {'w': (-1, 0), 'd': (0, 1), 's': (1, 0), 'a': (0, -1)}
 
 # Функция сохранения текущего состояния игры в файл
 def save_game():
-    try:
-        data = {"helicopter": helico.export_data(),
-                "clouds": clouds.export_data(),
-                "field": field.export_data(),
-                "tick": tick}
+    data = {"helicopter": helico.export_data(),
+            "clouds": clouds.export_data(),
+            "field": field.export_data(),
+            "tick": tick}
 
-        with open("level.json", "w") as lwl:
-            json.dump(data, lwl)
-    except (IOError, PermissionError) as e:
-        print(f"Error saving game: {e}")
-
+    with open("level.json", "w") as lwl:
+        json.dump(data, lwl)
 
 # Функция загрузки состояния игры из файла
 def load_game():
-    try:
+    if os.path.exists("level.json"):
         with open("level.json", "r") as lvl:
             data = json.load(lvl)
-            tick = data.get("tick", 1)
-            helico.import_data(data.get("helicopter", {}))
-            field.import_data(data.get("field", {}))
-            clouds.import_data(data.get("clouds", {}))
-    except FileNotFoundError:
-        print("No saved game found.")
+            tick = data["tick"] or 1
+            helico.import_data(data["helicopter"])
+            field.import_data(data["field"])
+            clouds.import_data(data["clouds"])
+    else:
+        # создание нового уровня, если файл не существует
         field.generate_tree()
         clouds.update()
-
 
 # Функция обработки нажатий клавиш
 def process_key(key):
@@ -79,32 +73,20 @@ listener = keyboard.Listener(
     on_release=process_key,)
 listener.start()
 
-
-def update_game_state():
-    # Обновление состояния игры
+# Основной игровой цикл
+while True:
+    os.system("cls")  # Очистка экрана (для Windows, для Linux используйте "clear")
     field.process_helicopter(helico, clouds)
     helico.print_stats()
     field.print_map(helico, clouds)
     print("TICK", tick)
-    
+    tick += 1
+    time.sleep(TICK_SLEEP)
 
-
-def main_game_loop():
-    global tick  # Добавьте эту строку
-    # Основной игровой цикл
-    while True:
-        os.system("cls")
-        update_game_state()
-        tick += 1
-        time.sleep(TICK_SLEEP)
-
-        # Обновление состояний в зависимости от тиков
-        if tick % TREE_UPDATE == 0:
-            field.generate_tree()
-        if tick % FIRE_UPDATE == 0:
-            field.update_fires()
-        if tick % CLOUDS_UPDATE == 0:
-            clouds.update()
-
-if __name__ == "__main__":
-    main_game_loop()
+    # Обновление состояний в зависимости от тиков
+    if (tick % TREE_UPDATE == 0):
+        field.generate_tree()
+    if (tick % FIRE_UPDATE == 0):
+        field.update_fires()
+    if (tick % CLOUDS_UPDATE == 0):
+        clouds.update()
