@@ -7,7 +7,6 @@ class Clouds:
         self.cells = [[0 for i in range(w)] for j in range(h)]
         self.update(r, mxr, g, mxg)
 
-    # Обновление облаков с вероятностями r/mxr и g/mxg для обычных облаков и грозы соответственно
     def update(self, r=1, mxr=20, g=1, mxg=10):
         for i in range(self.h):
             for j in range(self.w):
@@ -18,10 +17,8 @@ class Clouds:
                 else:
                     self.cells[i][j] = 0
 
-    # Экспорт данных облаков в виде словаря
     def export_data(self):
         return {"cells": self.cells}
 
-    # Импорт данных облаков из словаря
     def import_data(self, data):
         self.cells = data["cells"] or [[0 for i in range(self.w)] for j in range(self.h)]
