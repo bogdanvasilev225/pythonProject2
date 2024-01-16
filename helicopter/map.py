@@ -1,6 +1,7 @@
 from utils import randbool
 from utils import randcell
 from utils import randcell2
+from constants import FOREST_CHANCE, MAX_FOREST_CHANCE, RIVER_LENGTH, UPGRADE_COST, LIFE_COST, CELL_TYPES, TREE_BONUS
 
 # Определение типов клеток и связанных констант
 #  0 - поле
@@ -9,35 +10,29 @@ from utils import randcell2
 #  3 - госпиталь
 #  4 - апгрейд шоп
 #  5 - огонь
-CELL_TYPES = "🟩🌲🟦🚑🏩🔥"
-TREE_BONUS = 100
-UPGRADE_COST = 5000
-LIFE_COST = 10000
 
 class Map:
     def __init__(self, w, h):
+        # Инициализация карты с указанными размерами и генерацией различных элементов
         self.w = w
         self.h = h
         self.cells = [[0 for i in range(w)] for j in range(h)]
-        self.generate_forest(5, 10)
-        self.generate_river(10)
-        self.generate_river(10)
+        self.generate_forest(FOREST_CHANCE, MAX_FOREST_CHANCE)
+        self.generate_river(RIVER_LENGTH)
+        self.generate_river(RIVER_LENGTH)
         self.generate_upgrade_shop()
         self.generate_hospital()
 
     def check_bounds(self, x, y):
         # Проверка, находится ли точка в пределах карты
-        if (x < 0 or y < 0 or x >= self.h or y >= self.w):
-            return False
-        return True
+        return 0 <= x < self.h and 0 <= y < self.w
 
     def print_map(self, helico, clouds):
         # Вывод карты на экран с учетом вертолета и облаков
         print("⬛" * (self.w + 2))
-        for ri in range(self.h):
+        for ri, row in enumerate(self.cells):
             print("⬛", end="")
-            for ci in range(self.w):
-                cell = self.cells[ri][ci]
+            for ci, cell in enumerate(row):
                 if (clouds.cells[ri][ci] == 1):
                     print("⛅️", end="")
                 elif (clouds.cells[ri][ci] == 2):
@@ -50,10 +45,13 @@ class Map:
         print("⬛" * (self.w + 2))
 
     def generate_river(self, l):
+        # Генерация реки на карте
+        # l - длина реки
+        # Использует случайные координаты для начала реки и продолжает ее на l клеток
+        # Код проверяет границы карты и корректно обрабатывает выход за пределы карты
         rc = randcell(self.w, self.h)
         rx, ry = rc[0], rc[1]
 
-        # Проверяем, что координаты не выходят за пределы карты
         if self.check_bounds(rx, ry):
             self.cells[rx][ry] = 2
         else:
@@ -67,10 +65,13 @@ class Map:
                 rx, ry = rx2, ry2
                 l -= 1
             else:
-                break  # Выход из цикла, если выходит за пределы карты
+                break
 
     def generate_forest(self, r, mxr):
-        # Генерация леса с использованием случайных чисел
+        # Генерация леса на карте
+        # r - шанс появления дерева в клетке (меньше значение - больше деревьев)
+        # mxr - максимальный шанс для создания разнообразия
+        # Использует случайные числа для определения наличия дерева в каждой клетке
         for ri in range(self.h):
             for ci in range(self.w):
                 if randbool(r, mxr):
@@ -92,15 +93,15 @@ class Map:
 
     def generate_hospital(self):
         # Генерация госпиталя в случайной клетке (не на магазине улучшений)
-        c = randcell(self.w, self.h)
-        cx, cy = c[0], c[1]
-        if self.check_bounds(cx, cy) and self.cells[cx][cy] != 4:
-            self.cells[cx][cy] = 3
-        else:
-            self.generate_hospital()
+        while True:
+            c = randcell(self.w, self.h)
+            cx, cy = c[0], c[1]
+            if self.check_bounds(cx, cy) and self.cells[cx][cy] != 4:
+                self.cells[cx][cy] = 3
+                break
 
     def add_fire(self):
-        # Добавление огня в случайной клетке (только в клетку с деревом)
+        # Добавление огня в случайной клетке с деревом
         c = randcell(self.w, self.h)
         cx, cy = c[0], c[1]
         if self.check_bounds(cx, cy) and self.cells[cx][cy] == 1:
@@ -108,6 +109,7 @@ class Map:
 
     def update_fires(self):
         # Обновление состояний клеток с огнем и добавление новых огней
+        # Сбрасывает состояние клеток с огнем и добавляет новые огни в случайные клетки
         for ri in range(self.h):
             for ci in range(self.w):
                 cell = self.cells[ri][ci]
@@ -117,7 +119,9 @@ class Map:
             self.add_fire()
 
     def process_helicopter(self, helico, clouds):
-        # Обработка состояния вертолета в зависимости от типа клетки
+        # Обработка состояния вертолета в зависимости от типа клетки и облаков
+        # Обновляет состояние вертолета, проверяя тип клетки и наличие облаков в его текущей позиции
+        # Включает логику для топлива, счета, улучшений, жизней и геймовера
         if helico.x < 0 or helico.y < 0 or helico.x >= self.h or helico.y >= self.w:
             return  # Вертолет за пределами карты, не обрабатываем
 
@@ -141,7 +145,10 @@ class Map:
                 helico.game_over()
 
     def export_data(self):
+        # Экспорт данных карты в виде словаря
         return {"cells": self.cells}
 
     def import_data(self, data):
+        # Импорт данных карты из словаря
+        # Если данные отсутствуют, создается новая карта
         self.cells = data["cells"] or [[0 for i in range(self.w)] for j in range(self.h)]
