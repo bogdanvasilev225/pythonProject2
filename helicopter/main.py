@@ -5,13 +5,8 @@ import time
 import os
 import json
 from helicopter import Helicopter as Helico
+from constants import TICK_SLEEP, CLOUDS_UPDATE, TREE_UPDATE, FIRE_UPDATE, MAP_W, MAP_H
 
-# Константы времени и размера карты
-TICK_SLEEP = 0.05
-CLOUDS_UPDATE = 100
-TREE_UPDATE = 30
-FIRE_UPDATE = 75
-MAP_W, MAP_H = 20, 10
 
 # Инициализация объектов (карты, облаков и вертолета)
 field = Map(MAP_W, MAP_H)
